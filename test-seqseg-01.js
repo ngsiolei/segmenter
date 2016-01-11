@@ -1,5 +1,5 @@
 var assert = require('assert');
-var Segmenter = require('./segmenter');
+var Segmenter = require('./Segmenter');
 
 var seg = new Segmenter();
 var str = '8-12便利店';

@@ -1,11 +1,63 @@
-module.exports = Segmenter = function () {
+module.exports = Segmenter = function (db) {
+  this.db = db || [];
+};
+
+Segmenter.prototype.getSegments = function (text) {
+  if (!text || (typeof text !== 'string')) {
+    return [];
+  }
+  text = cleanUp(text);
+  var seqSegments = this.getSeqSegments(text);
+  var pendingSegments = seqSegments.alphaDigit;
+  var self = this;
+  var intersect = seqSegments.cjk.filter(function (val) {
+      return self.db.indexOf(val) !== -1;
+  });
+  pendingSegments = pendingSegments.concat(intersect);
+  var matchedSegments = [];
+  for (var i = 0, l = pendingSegments.length; i < l; i++) {
+    var ps = pendingSegments[i];
+    var pos = text.indexOf(ps);
+    if (pos >= 0) {
+      matchedSegments.push({'s': ps, 'pos': pos});
+    }
+  }
+  matchedSegments.sort(function (a, b) {
+    if (a.pos === b.pos) {
+      return b.s.length - a.s.length;
+    } else {
+      return a.pos - b.pos;
+    }
+  });
+  var reducedSegments = [];
+  for (var i = 0, l = matchedSegments.length; i < l; i++) {
+    var ms = matchedSegments[i];
+    if (text.indexOf(ms.s) >= 0) {
+      text = text.replace(new RegExp(ms.s, 'g'), ' ');
+      text = text.replace(/(^\s+)|(\s+$)/g, '');
+      text = text.replace(/\s+/g, ' ');
+      reducedSegments.push(ms.s);
+    }
+  }
+  if (text) {
+    var remaining = text.split(' ');
+    for (var i = 0, l = remaining.length; i < l; i++) {
+      var r = remaining[i].replace(/(^\s+)|(\s+$)/g, '');
+      if (r) {
+        if (reducedSegments.indexOf(r) === -1) {
+          reducedSegments.push(r);
+        }
+      }
+    }
+  }
+  return reducedSegments;
 };
 
 Segmenter.prototype.getSeqSegments = function (text) {
-  var seqSegments = {'alphaDigit': [], 'cjk': []};
-  if (!text) {
-    return seqSegments;
+  if (typeof text !== 'string') {
+    return text;
   }
+  var seqSegments = {'alphaDigit': [], 'cjk': []};
   
   text = cleanUp(text);
   var alphaDigitPattern = /^[a-z0-9]+/g;
