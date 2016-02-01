@@ -7,6 +7,7 @@ Segmenter.prototype.getSegments = function (text) {
     return [];
   }
   text = cleanUp(text);
+
   var seqSegments = this.getSeqSegments(text);
   var pendingSegments = seqSegments.alphaDigit;
   var self = this;
@@ -14,13 +15,24 @@ Segmenter.prototype.getSegments = function (text) {
       return self.db.indexOf(val) !== -1;
   });
   pendingSegments = pendingSegments.concat(intersect);
-  var matchedSegments = [];
+  var matchedSegmentsObj = {};
   for (var i = 0, l = pendingSegments.length; i < l; i++) {
     var ps = pendingSegments[i];
-    var pos = text.indexOf(ps);
-    if (pos >= 0) {
-      matchedSegments.push({'s': ps, 'pos': pos});
+    var re = new RegExp(ps, 'g');
+    while ((theMatch = re.exec(text)) !== null) {
+      var pos = theMatch.index;
+      if (matchedSegmentsObj[pos]) {
+        if (matchedSegmentsObj[pos].length < ps.length) {
+          matchedSegmentsObj[pos] = ps;
+        }
+      } else {
+        matchedSegmentsObj[pos] = ps;
+      }
     }
+  }
+  var matchedSegments = [];
+  for (var i in matchedSegmentsObj) {
+    matchedSegments.push({'s': matchedSegmentsObj[i], 'pos': i});
   }
   matchedSegments.sort(function (a, b) {
     if (a.pos === b.pos) {
@@ -32,13 +44,17 @@ Segmenter.prototype.getSegments = function (text) {
   var reducedSegments = [];
   for (var i = 0, l = matchedSegments.length; i < l; i++) {
     var ms = matchedSegments[i];
-    if (text.indexOf(ms.s) >= 0) {
-      text = text.replace(new RegExp(ms.s, 'g'), ' ');
+    var re = new RegExp(ms.s);
+    if (text.match(re) !== null) {
+      text = text.replace(re, '');
       text = text.replace(/(^\s+)|(\s+$)/g, '');
       text = text.replace(/\s+/g, ' ');
       reducedSegments.push(ms.s);
     }
   }
+  reducedSegments = reducedSegments.filter(function (val, idx, self) {
+    return self.indexOf(val) === idx;
+  });
   if (text) {
     var remaining = text.split(' ');
     for (var i = 0, l = remaining.length; i < l; i++) {
