@@ -32,7 +32,7 @@ Segmenter.prototype.getSegments = function (text) {
   }
   var matchedSegments = [];
   for (var i in matchedSegmentsObj) {
-    matchedSegments.push({'s': matchedSegmentsObj[i], 'pos': i});
+    matchedSegments.push({'s': matchedSegmentsObj[i], 'pos': parseInt(i, 10)});
   }
   matchedSegments.sort(function (a, b) {
     if (a.pos === b.pos) {
@@ -41,15 +41,25 @@ Segmenter.prototype.getSegments = function (text) {
       return a.pos - b.pos;
     }
   });
+  var cleanedSegments = [];
+  var end = matchedSegments[0].s.length;
+  cleanedSegments.push(matchedSegments[0]);
+  for (var i = 1, l = matchedSegments.length; i < l; i++) {
+    var m = matchedSegments[i];
+    if (m.pos >= end) {
+      cleanedSegments.push(m);
+      end = m.pos + m.s.length;
+    }
+  }
   var reducedSegments = [];
-  for (var i = 0, l = matchedSegments.length; i < l; i++) {
-    var ms = matchedSegments[i];
-    var re = new RegExp(ms.s);
+  for (var i = 0, l = cleanedSegments.length; i < l; i++) {
+    var cs = cleanedSegments[i];
+    var re = new RegExp(cs.s);
     if (text.match(re) !== null) {
       text = text.replace(re, '');
       text = text.replace(/(^\s+)|(\s+$)/g, '');
       text = text.replace(/\s+/g, ' ');
-      reducedSegments.push(ms.s);
+      reducedSegments.push(cs.s);
     }
   }
   reducedSegments = reducedSegments.filter(function (val, idx, self) {
