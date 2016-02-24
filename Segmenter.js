@@ -42,8 +42,11 @@ Segmenter.prototype.getSegments = function (text) {
     }
   });
   var cleanedSegments = [];
-  var end = matchedSegments[0].s.length;
-  cleanedSegments.push(matchedSegments[0]);
+  var end = 0;
+  if (matchedSegments[0]) {
+    end = matchedSegments[0].s.length;
+    cleanedSegments.push(matchedSegments[0]);
+  }
   for (var i = 1, l = matchedSegments.length; i < l; i++) {
     var m = matchedSegments[i];
     if (m.pos >= end) {
