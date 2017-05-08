@@ -87,7 +87,6 @@ Segmenter.prototype.getSeqSegments = function (text) {
     return text;
   }
   var seqSegments = {'alphaDigit': [], 'cjk': []};
-  
   text = cleanUp(text);
   var alphaDigitPattern = /^[a-z0-9]+/g;
   var pieces = [];
@@ -96,10 +95,11 @@ Segmenter.prototype.getSeqSegments = function (text) {
   while (text.length > 0) {
     if (text.match(alphaDigitPattern) !== null) {
       matches = text.match(alphaDigitPattern);
-      pieces.push({'content': matches[0], 'type': 'alphaDigit'});
+      seqSegments.alphaDigit.push(matches[0]);
       text = text.replace(matches[0], '');
+      pieces.push('');
     } else {
-      pieces.push({'content': text[0], 'type': 'cjk'});
+      pieces.push(text[0]);
       text = text.replace(text[0], '');
     }
     text = text.replace(/(^\s+)|(\s+$)/g, '');
@@ -108,15 +108,11 @@ Segmenter.prototype.getSeqSegments = function (text) {
     for (var j = i + 1; j <= l; j++) {
       var slices = pieces.slice(i, j);
       var seg = '';
-      if (slices[0].type === 'alphaDigit') {
-        seg = slices[0].content;
-        if (seg) {
-          seqSegments.alphaDigit.push(seg);
-        }
+      if ('' === slices[0] || '' === slices[slices.length - 1]) {
         j = l + 1;
       } else {
         for (var k = 0, slicesLen = slices.length; k < slicesLen; k++) {
-          seg += slices[k].content;
+          seg += slices[k]
         }
         if (seg) {
           seqSegments.cjk.push(seg);
