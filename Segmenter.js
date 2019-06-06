@@ -1,9 +1,12 @@
-module.exports = Segmenter = function (db) {
-  this.db = db || [];
-};
+'use strict';
 
-Segmenter.prototype.getSegments = function (text) {
-  if (!text || (typeof text !== 'string')) {
+function Segmenter(db) {
+  this.db = db || [];
+}
+module.exports = Segmenter;
+
+Segmenter.prototype.getSegments = function(text) {
+  if (!text || typeof text !== 'string') {
     return [];
   }
   text = cleanUp(text);
@@ -11,14 +14,15 @@ Segmenter.prototype.getSegments = function (text) {
   var seqSegments = this.getSeqSegments(text);
   var pendingSegments = seqSegments.alphaDigit;
   var self = this;
-  var intersect = seqSegments.cjk.filter(function (val) {
-      return self.db.indexOf(val) !== -1;
+  var intersect = seqSegments.cjk.filter(function(val) {
+    return self.db.indexOf(val) !== -1;
   });
   pendingSegments = pendingSegments.concat(intersect);
   var matchedSegmentsObj = {};
   for (var i = 0, l = pendingSegments.length; i < l; i++) {
     var ps = pendingSegments[i];
     var re = new RegExp(ps, 'g');
+    var theMatch = null;
     while ((theMatch = re.exec(text)) !== null) {
       var pos = theMatch.index;
       if (matchedSegmentsObj[pos]) {
@@ -32,9 +36,9 @@ Segmenter.prototype.getSegments = function (text) {
   }
   var matchedSegments = [];
   for (var i in matchedSegmentsObj) {
-    matchedSegments.push({'s': matchedSegmentsObj[i], 'pos': parseInt(i, 10)});
+    matchedSegments.push({s: matchedSegmentsObj[i], pos: parseInt(i, 10)});
   }
-  matchedSegments.sort(function (a, b) {
+  matchedSegments.sort(function(a, b) {
     if (a.pos === b.pos) {
       return b.s.length - a.s.length;
     } else {
@@ -65,7 +69,7 @@ Segmenter.prototype.getSegments = function (text) {
       reducedSegments.push(cs.s);
     }
   }
-  reducedSegments = reducedSegments.filter(function (val, idx, self) {
+  reducedSegments = reducedSegments.filter(function(val, idx, self) {
     return self.indexOf(val) === idx;
   });
   if (text) {
@@ -82,11 +86,11 @@ Segmenter.prototype.getSegments = function (text) {
   return reducedSegments;
 };
 
-Segmenter.prototype.getSeqSegments = function (text) {
+Segmenter.prototype.getSeqSegments = function(text) {
   if (typeof text !== 'string') {
     return text;
   }
-  var seqSegments = {'alphaDigit': [], 'cjk': []};
+  var seqSegments = {alphaDigit: [], cjk: []};
   text = cleanUp(text);
   var alphaDigitPattern = /^[a-z0-9]+/g;
   var pieces = [];
@@ -112,7 +116,7 @@ Segmenter.prototype.getSeqSegments = function (text) {
         j = l + 1;
       } else {
         for (var k = 0, slicesLen = slices.length; k < slicesLen; k++) {
-          seg += slices[k]
+          seg += slices[k];
         }
         if (seg) {
           seqSegments.cjk.push(seg);
